@@ -9,6 +9,11 @@ from orm_managers.base_manager import BaseORMManager
 class CardManager(BaseORMManager):
 	model = Card
 
+	def fetch_all(self) -> list[Card]:
+		"""Fetch all cards."""
+		with Session(self.engine) as session:
+			return list(session.exec(select(Card)).fetchall())
+
 	def fetch_by_id(self, card_id: int) -> Card | None:
 		"""Fetch a card by its ID."""
 		with Session(self.engine) as session:
