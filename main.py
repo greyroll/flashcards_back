@@ -80,4 +80,4 @@ async def export_cards():
 	cards = sheets_manager.card_manager.fetch_all()
 	return {"cards": cards}
 
-uvicorn.run(app, host="127.0.0.1", port=8001)
+# uvicorn.run(app, host="127.0.0.1", port=8001)
