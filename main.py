@@ -9,6 +9,7 @@ from orm_models import UserSession
 
 app = FastAPI()
 flashcard_session = FlashcardsSession()
+flashcard_session.user_session_manager.create_all_tables()
 sheets_manager = GoogleSheetsManager()
 
 
