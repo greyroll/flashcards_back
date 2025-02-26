@@ -23,5 +23,26 @@ class DeckManager(BaseORMManager):
 		"""Fetch a deck by its name."""
 		with Session(self.engine) as session:
 			return list(session.exec(select(Deck.name)))
+		
+	def add_deck(self, deck_id: int | None, name: str, description: str):
+		with Session(self.engine) as session:
+			deck = Deck(id=deck_id, name=name, description=description)
+			session.add(deck)
+			session.commit()
+			session.refresh(deck)
+		return deck
+
+	def update_deck(self, deck_id: int, name: str, description: str):
+		with Session(self.engine) as session:
+			deck = session.exec(select(Deck).where(Deck.id == deck_id)).one_or_none()
+			if not deck:
+				return None
+			deck.name = name
+			deck.description = description
+			session.add(deck)
+			session.commit()
+			session.refresh(deck)
+		return deck
+
 
 
