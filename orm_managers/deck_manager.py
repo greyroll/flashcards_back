@@ -9,6 +9,11 @@ from orm_managers.base_manager import BaseORMManager
 class DeckManager(BaseORMManager):
 	model = Deck
 
+	def fetch_all(self):
+		with Session(self.engine) as session:
+			return list(session.exec(select(Deck)).fetchall())
+
+
 	def fetch_deck_by_id(self, deck_id: int) -> Deck | None:
 		"""Fetch a deck by its ID."""
 		with Session(self.engine) as session:

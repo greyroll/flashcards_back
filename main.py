@@ -52,10 +52,16 @@ async def finish_session_show_stats(request: Request):
 	return {**stats}
 
 
-@app.get("/decks")
+@app.get("/decks/names")
 async def index():
 	decks_names: list[str] = flashcard_session.get_decks_names()
 	return {"decks_names": decks_names}
+
+
+@app.get("/decks")
+async def get_decks():
+	decks = sheets_manager.deck_manager.fetch_all()
+	return {"decks": decks}
 
 
 @app.post("/decks/update")
@@ -73,6 +79,7 @@ async def update_deck(request: Request):
 	else:
 		sheets_manager.update_deck(deck_id, deck_name, deck_description)
 	return {"status": "success"}
+
 
 @app.post("/cards/update")
 async def update_card(request: Request):
