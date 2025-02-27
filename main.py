@@ -103,4 +103,5 @@ async def update_card(request: Request):
 
 	return {"status": "success"}
 
-uvicorn.run(app, host="127.0.0.1", port=8001)
+if __name__ == "__main__":
+	uvicorn.run(app, host="127.0.0.1", port=8001)
