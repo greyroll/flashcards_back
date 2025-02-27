@@ -3,7 +3,7 @@ from fastapi import Request, HTTPException
 from classes.flashcards_session import FlashcardsSession
 
 
-def get_valid_session_id(request: Request, flashcard_session: FlashcardsSession) -> int:
+def get_session_id_or_401(request: Request, flashcard_session: FlashcardsSession) -> int:
     """Извлекает session_id из заголовка Authorization и проверяет его валидность."""
     try:
         session_id = int(request.headers.get("Authorization", "").replace("Bearer ", ""))
