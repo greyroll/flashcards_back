@@ -11,8 +11,9 @@ class BaseORMManager:
 	def __init__(self):
 		project_root = Path(__file__).resolve().parent.parent  # 1 уровня вверх от текущего файла
 		# db_path = project_root / DB_PATH  # Путь к базе данных в корне проекта
-
-		self.engine = create_engine(f"sqlite:///{DB_PATH}")
+		path = f"sqlite:///{DB_PATH}"
+		print({"path": path})
+		self.engine = create_engine(path)
 
 	def create_all_tables(self):
 		"""Create all tables in the database."""
