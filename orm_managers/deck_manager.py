@@ -25,7 +25,7 @@ class DeckManager(BaseORMManager):
 			return session.exec(select(Deck).options(selectinload(Deck.cards).subqueryload(Card.deck)).where(Deck.name == deck_name)).unique().one_or_none()
 
 	def fetch_decks_names(self) -> list[str] | None:
-		"""Fetch a deck by its name."""
+		"""Fetch deck by its name."""
 		with Session(self.engine) as session:
 			return list(session.exec(select(Deck.name)))
 		
