@@ -1,4 +1,4 @@
-from sqlalchemy.orm import selectinload, joinedload
+from sqlalchemy.orm import joinedload
 from sqlmodel import Session, create_engine, select
 
 from orm_models.card import Card

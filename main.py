@@ -2,6 +2,8 @@ import uvicorn
 
 from fastapi import FastAPI, Request, HTTPException
 
+from loguru import logger
+
 from classes.flashcards_session import FlashcardsSession
 from classes.google_sheets_manager import GoogleSheetsManager
 from funcs import get_session_id_or_401
@@ -10,6 +12,8 @@ from orm_models import UserSession
 app = FastAPI()
 flashcard_session = FlashcardsSession()
 sheets_manager = GoogleSheetsManager()
+
+logger.add("logfile.log", level="DEBUG")
 
 
 @app.post("/session/start")
