@@ -11,9 +11,8 @@ class BaseORMManager:
 	model: SQLModel | None = None
 
 	def __init__(self):
-		project_root = Path(__file__).resolve().parent.parent  # Поднимаемся на уровень вверх
-		db_path = project_root / DB_PATH  # Формируем полный путь к базе данных
-		path = f"sqlite:///{db_path.resolve()}"  # Полный абсолютный путь
+		db_path = Path(DB_PATH)
+		path = f"sqlite:///{db_path}"  # Полный абсолютный путь
 		print({"path": path})  # Проверяем правильность пути
 		self.engine = create_engine(path)
 
