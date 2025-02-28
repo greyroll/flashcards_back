@@ -14,7 +14,7 @@ class BaseORMManager:
 		project_root = Path(__file__).resolve().parent.parent  # Поднимаемся на уровень вверх
 		db_path = project_root / DB_PATH  # Формируем полный путь к базе данных
 		path = f"sqlite:///{db_path.resolve()}"  # Полный абсолютный путь
-		logger.info({"path": path})  # Проверяем правильность пути
+		print({"path": path})  # Проверяем правильность пути
 		self.engine = create_engine(path)
 
 		# project_root = Path(__file__).resolve().parent.parent  # 1 уровня вверх от текущего файла
