@@ -16,3 +16,6 @@ uvicorn==0.34.0
 
 python-dotenv~=1.0.1
 loguru~=0.7.3
+pytest~=8.3.4
+gspread~=6.2.0
+oauth2client~=4.1.3
