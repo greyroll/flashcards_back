@@ -1,72 +1,81 @@
 from sqlalchemy.orm import joinedload
-from sqlmodel import Session, create_engine, select
+from sqlmodel import Session, select
 
-from orm_models.card import Card
-from orm_models.deck import Deck
+from orm_models.card_orm import CardORM
+from orm_models.deck_orm import DeckORM
 from orm_managers.base_manager import BaseORMManager
 
 
 class CardManager(BaseORMManager):
-	model = Card
+	model = CardORM
 
-	def fetch_all(self) -> list[Card]:
+	def fetch_all(self) -> list[CardORM]:
 		"""Fetch all cards."""
 		with Session(self.engine) as session:
-			return list(session.exec(select(Card)).fetchall())
+			return list(session.exec(select(CardORM)).fetchall())
 
-	def fetch_by_id(self, card_id: int) -> Card | None:
+	def fetch_by_id(self, card_id: int) -> CardORM | None:
 		"""Fetch a card by its ID."""
 		with Session(self.engine) as session:
-			result = session.exec(select(Card).options(joinedload(Card.deck).subqueryload(Deck.cards)).where(Card.id == card_id)).one_or_none()
+			result = session.exec(select(CardORM).options(joinedload(CardORM.deck).subqueryload(DeckORM.cards)).where(CardORM.id == card_id)).one_or_none()
 			return result
 
-	def fetch_by_front(self, card_front: str) -> Card | None:
+	def fetch_by_front(self, card_front: str) -> CardORM | None:
 		"""Fetch a card by its front text."""
 		with Session(self.engine) as session:
-			return session.exec(select(Card).options(joinedload(Card.deck).subqueryload(Deck.cards)).where(
-				Card.front == card_front)).one_or_none()
+			return session.exec(select(CardORM).options(joinedload(CardORM.deck).subqueryload(DeckORM.cards)).where(
+				CardORM.front == card_front)).one_or_none()
 
-	def fetch_by_back(self, card_back: str) -> Card | None:
+	def fetch_by_back(self, card_back: str) -> CardORM | None:
 		"""Fetch a card by its back text."""
 		with Session(self.engine) as session:
-			return session.exec(select(Card).options(joinedload(Card.deck).subqueryload(Deck.cards)).where(Card.back == card_back)).one_or_none()
+			return session.exec(select(CardORM).options(joinedload(CardORM.deck).subqueryload(DeckORM.cards)).where(CardORM.back == card_back)).one_or_none()
 
-	def update_card(self, card_id: int, front: str, back: str, deck_id: int) -> Card | None:
 
+	def update_card(self, card_id: int, front: str, back: str, deck_id: int | None) -> CardORM | None:
+		"""Update a card."""
 		with Session(self.engine) as session:
-			card = session.exec(select(Card).where(Card.id == card_id)).one_or_none()
-			deck = session.exec(select(Deck).where(Deck.id == deck_id)).one_or_none()
+			card = session.exec(select(CardORM).where(CardORM.id == card_id)).one_or_none()
 
-			if not card:
+			if card is None:
+				return None
+
+			deck = session.exec(select(DeckORM).where(DeckORM.id == deck_id)).one_or_none() if deck_id else None
+
+			if deck_id and deck is None:
 				return None
 
 			card.front = front
 			card.back = back
 			card.deck_id = deck_id
 
-			if card not in deck.cards:
+			if deck and card not in deck.cards:
 				deck.cards.append(card)
 				session.add(deck)
 
 			session.add(card)
 			session.commit()
 			session.refresh(card)
-			session.refresh(deck)
+			if deck:
+				session.refresh(deck)
 
 		return card
 
-	def add_card(self, card_id: int | None, front: str, back: str, deck_id: int) -> Card | None:
+	def add_card(self, card_id: int | None, front: str, back: str, deck_id: int | None) -> CardORM | None:
+		"""Add a new card."""
 		with Session(self.engine) as session:
-			deck = session.exec(select(Deck).where(Deck.id == deck_id)).one_or_none
-			if not deck:
+			deck = session.exec(select(DeckORM).where(DeckORM.id == deck_id)).one_or_none() if deck_id else None
+			if deck_id and deck is None:
 				return None
-			card = Card(id=card_id, front=front, back=back, deck_id=deck_id)
+			card = CardORM(id=card_id, front=front, back=back, deck_id=deck_id)
 			session.add(card)
-			deck.cards.append(card)
-			session.add(deck)
+			if deck:
+				deck.cards.append(card)
+				session.add(deck)
 			session.commit()
 			session.refresh(card)
-			session.refresh(deck)
+			if deck:
+				session.refresh(deck)
 
 		return card
 

@@ -14,3 +14,6 @@ def get_session_id_or_401(request: Request, flashcard_session: FlashcardsSession
         raise HTTPException(status_code=401, detail="Invalid session")
 
     return session_id
+
+
+

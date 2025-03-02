@@ -7,7 +7,7 @@ from loguru import logger
 from classes.flashcards_session import FlashcardsSession
 from classes.google_sheets_manager import GoogleSheetsManager
 from funcs import get_session_id_or_401
-from orm_models import UserSession
+from orm_models import UserSessionORM
 
 app = FastAPI()
 flashcard_session = FlashcardsSession()
@@ -19,7 +19,7 @@ logger.add("logfile.log", level="DEBUG")
 @app.post("/session/start")
 async def start_session(request: Request):
 	data = await request.json()
-	session: UserSession = flashcard_session.start_session(data["user_name"], data["deck_name"])
+	session: UserSessionORM = flashcard_session.start_session(data["user_name"], data["deck_name"])
 	session_id = session.id
 	return {"session_id": session_id}
 
@@ -58,7 +58,15 @@ async def finish_session_show_stats(request: Request):
 @app.get("/decks")
 async def export_decks():
 	decks = sheets_manager.deck_manager.fetch_all()
-	return {"decks": decks}
+	spreadsheet = sheets_manager.connect_to_google_sheets("flashcards_data")
+	decks_sheet = spreadsheet.worksheet("decks")
+	decks_sheet.clear()
+	decks_sheet.append_row(["id", "name", "description"])
+
+	for deck in decks:
+		decks_sheet.append_row([str(deck.id), str(deck.name), str(deck.description)])
+
+	return {"status": "success", "message": "Data exported successfully"}
 
 
 @app.get("/decks/names")
@@ -66,46 +74,39 @@ async def export_decks_names():
 	decks_names: list[str] = flashcard_session.get_decks_names()
 	return {"decks_names": decks_names}
 
-# TODO: использовать pydantic
-@app.post("/decks/update")
-async def update_deck(request: Request):
-	data = await request.json()
-	deck_id = data.get("id")
-	deck_name = data.get("name")
-	deck_description = data.get("description")
 
-	if not deck_name or not deck_description or not deck_id:
-		return {"status": "error", "message": "Missing required fields"}
-
-	if sheets_manager.deck_manager.fetch_by_id(deck_id) is None:
-		sheets_manager.add_deck(deck_id, deck_name, deck_description)
-	else:
-		sheets_manager.update_deck(deck_id, deck_name, deck_description)
+@app.get("/decks/update")
+async def import_decks():
+	spreadsheet = sheets_manager.connect_to_google_sheets("flashcards_data")
+	decks_sheet = spreadsheet.worksheet("decks")
+	decks_data = decks_sheet.get_all_values()
+	sheets_manager.update_decks_table(decks_data)
 	return {"status": "success"}
 
 
 @app.get("/cards")
 async def export_cards():
 	cards = sheets_manager.card_manager.fetch_all()
-	return {"cards": cards}
 
-@app.post("/cards/update")
-async def update_card(request: Request):
-	data = await request.json()
-	card_id = data.get("id")
-	card_front = data.get("front")
-	card_back = data.get("back")
-	deck_id = data.get("deck_id")
+	spreadsheet = sheets_manager.connect_to_google_sheets("flashcards_data")
+	cards_sheet = spreadsheet.worksheet("cards")
+	cards_sheet.clear()
+	cards_sheet.append_row(["id", "front", "back", "deck_id"])  # Заголовки
 
-	if not card_front or not card_back or not deck_id:
-		return {"status": "error", "message": "Missing required fields"}
+	for card in cards:
+		cards_sheet.append_row([str(card.id), str(card.front), str(card.back), str(card.deck_id)])
 
-	if sheets_manager.card_manager.fetch_by_id(card_id) is None:
-		sheets_manager.add_card(card_id, card_front, card_back, deck_id)
-	else:
-		sheets_manager.update_card(card_id, card_front, card_back, deck_id)
+	return {"status": "success", "message": "Data exported successfully"}
 
+
+@app.get("/cards/update")
+async def import_cards():
+	spreadsheet = sheets_manager.connect_to_google_sheets("flashcards_data")
+	cards_sheet = spreadsheet.worksheet("cards")
+	cards_data = cards_sheet.get_all_values()
+	sheets_manager.update_cards_table(cards_data)
 	return {"status": "success"}
+
 
 if __name__ == "__main__":
 	uvicorn.run(app, host="127.0.0.1", port=8001)
