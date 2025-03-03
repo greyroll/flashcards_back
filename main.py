@@ -108,5 +108,21 @@ async def import_cards():
 	return {"status": "success"}
 
 
+@app.delete("/cards/delete/{card_id}")
+async def delete_card(card_id: int):
+	if not sheets_manager.card_exists(card_id):
+		raise HTTPException(status_code=404, detail="Card not found")
+	sheets_manager.delete_card(card_id)
+	return {"status": "success", "message": f"Card {card_id} deleted"}
+
+
+@app.delete("/decks/delete/{deck_id}")
+async def delete_card(deck_id: int):
+	if not sheets_manager.deck_exists(deck_id):
+		raise HTTPException(status_code=404, detail="Deck not found")
+	sheets_manager.delete_card(deck_id)
+	return {"status": "success", "message": f"Deck {deck_id} deleted"}
+
+
 if __name__ == "__main__":
 	uvicorn.run(app, host="127.0.0.1", port=8001)

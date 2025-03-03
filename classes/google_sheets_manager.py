@@ -14,7 +14,7 @@ class GoogleSheetsManager:
 		self.deck_manager = DeckManager()
 
 	def connect_to_google_sheets(self, spreadsheet_name):
-		scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+		# scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 		creds = ServiceAccountCredentials.from_json_keyfile_dict(GOOGLE_CREDENTIALS)
 		client = gspread.authorize(creds)
 
@@ -80,3 +80,9 @@ class GoogleSheetsManager:
 				self.update_deck(deck)
 			else:
 				self.add_deck(deck)
+
+	def delete_card(self, card_id: int):
+		self.card_manager.delete(card_id)
+
+	def delete_deck(self, deck_id: int):
+		self.deck_manager.delete(deck_id)
