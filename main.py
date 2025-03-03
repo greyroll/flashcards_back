@@ -1,12 +1,12 @@
 import uvicorn
 
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, Header
 
 from loguru import logger
 
+from classes.auth_manager import AuthManager
 from classes.flashcards_session import FlashcardsSession
 from classes.google_sheets_manager import GoogleSheetsManager
-from funcs import get_session_id_or_401
 from orm_models import UserSessionORM
 
 app = FastAPI()
@@ -17,7 +17,8 @@ logger.add("logfile.log", level="DEBUG")
 
 
 @app.post("/session/start")
-async def start_session(request: Request):
+async def start_session(request: Request, x_api_key: str = Header()):
+	AuthManager.validate_api_key_or_403(x_api_key)
 	data = await request.json()
 	session: UserSessionORM = flashcard_session.start_session(data["user_name"], data["deck_name"])
 	session_id = session.id
@@ -25,22 +26,25 @@ async def start_session(request: Request):
 
 
 @app.get("/session/front")
-async def show_front(request: Request):
-	session_id = get_session_id_or_401(request, flashcard_session)
+async def show_front(request: Request, x_api_key: str = Header()):
+	AuthManager.validate_api_key_or_403(x_api_key)
+	session_id = AuthManager.get_session_id_or_401(request, flashcard_session)
 	card_front = flashcard_session.show_card_front(session_id)
 	return {"card_front": card_front}
 
 
 @app.get("/session/back")
-async def show_back(request: Request):
-	session_id = get_session_id_or_401(request, flashcard_session)
+async def show_back(request: Request, x_api_key: str = Header()):
+	AuthManager.validate_api_key_or_403(x_api_key)
+	session_id = AuthManager.get_session_id_or_401(request, flashcard_session)
 	card_back = flashcard_session.show_card_back(session_id)
 	return {"card_back": card_back}
 
 
 @app.post("/session/check_answer")
-async def check_answer(request: Request):
-	session_id = get_session_id_or_401(request, flashcard_session)
+async def check_answer(request: Request, x_api_key: str = Header()):
+	AuthManager.validate_api_key_or_403(x_api_key)
+	session_id = AuthManager.get_session_id_or_401(request, flashcard_session)
 	data = await request.json()
 	is_studied: bool = data["is_card_studied"]
 	flashcard_session.know_or_repeat_active_card(session_id, is_studied)
@@ -49,14 +53,23 @@ async def check_answer(request: Request):
 
 
 @app.get("/session/finish")
-async def finish_session_show_stats(request: Request):
-	session_id = get_session_id_or_401(request, flashcard_session)
+async def finish_session_show_stats(request: Request, x_api_key: str = Header()):
+	AuthManager.validate_api_key_or_403(x_api_key)
+	session_id = AuthManager.get_session_id_or_401(request, flashcard_session)
 	stats = flashcard_session.get_statistics(session_id)
 	return {**stats}
 
 
+@app.get("/decks/names")
+async def export_decks_names(x_api_key: str = Header()):
+	AuthManager.validate_api_key_or_403(x_api_key)
+	decks_names: list[str] = flashcard_session.get_decks_names()
+	return {"decks_names": decks_names}
+
+
 @app.get("/decks")
-async def export_decks():
+async def export_decks(x_api_key: str = Header()):
+	AuthManager.validate_api_key_or_403(x_api_key)
 	decks = sheets_manager.deck_manager.fetch_all()
 	spreadsheet = sheets_manager.connect_to_google_sheets("flashcards_data")
 	decks_sheet = spreadsheet.worksheet("decks")
@@ -69,14 +82,9 @@ async def export_decks():
 	return {"status": "success", "message": "Data exported successfully"}
 
 
-@app.get("/decks/names")
-async def export_decks_names():
-	decks_names: list[str] = flashcard_session.get_decks_names()
-	return {"decks_names": decks_names}
-
-
 @app.get("/decks/update")
-async def import_decks():
+async def import_decks(x_api_key: str = Header()):
+	AuthManager.validate_api_key_or_403(x_api_key)
 	spreadsheet = sheets_manager.connect_to_google_sheets("flashcards_data")
 	decks_sheet = spreadsheet.worksheet("decks")
 	decks_data = decks_sheet.get_all_values()
@@ -85,7 +93,8 @@ async def import_decks():
 
 
 @app.get("/cards")
-async def export_cards():
+async def export_cards(x_api_key: str = Header()):
+	AuthManager.validate_api_key_or_403(x_api_key)
 	cards = sheets_manager.card_manager.fetch_all()
 
 	spreadsheet = sheets_manager.connect_to_google_sheets("flashcards_data")
@@ -100,7 +109,8 @@ async def export_cards():
 
 
 @app.get("/cards/update")
-async def import_cards():
+async def import_cards(x_api_key: str = Header()):
+	AuthManager.validate_api_key_or_403(x_api_key)
 	spreadsheet = sheets_manager.connect_to_google_sheets("flashcards_data")
 	cards_sheet = spreadsheet.worksheet("cards")
 	cards_data = cards_sheet.get_all_values()
@@ -109,7 +119,8 @@ async def import_cards():
 
 
 @app.delete("/cards/delete/{card_id}")
-async def delete_card(card_id: int):
+async def delete_card(card_id: int, x_api_key: str = Header()):
+	AuthManager.validate_api_key_or_403(x_api_key)
 	if not sheets_manager.card_exists(card_id):
 		raise HTTPException(status_code=404, detail="Card not found")
 	sheets_manager.delete_card(card_id)
@@ -117,7 +128,8 @@ async def delete_card(card_id: int):
 
 
 @app.delete("/decks/delete/{deck_id}")
-async def delete_card(deck_id: int):
+async def delete_card(deck_id: int, x_api_key: str = Header()):
+	AuthManager.validate_api_key_or_403(x_api_key)
 	if not sheets_manager.deck_exists(deck_id):
 		raise HTTPException(status_code=404, detail="Deck not found")
 	sheets_manager.delete_card(deck_id)
