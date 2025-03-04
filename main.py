@@ -70,51 +70,28 @@ async def export_decks_names(x_api_key: str = Header()):
 @app.get("/decks")
 async def export_decks(x_api_key: str = Header()):
 	AuthManager.validate_api_key_or_403(x_api_key)
-	decks = sheets_manager.deck_manager.fetch_all()
-	spreadsheet = sheets_manager.connect_to_google_sheets("flashcards_data")
-	decks_sheet = spreadsheet.worksheet("decks")
-	decks_sheet.clear()
-	decks_sheet.append_row(["id", "name", "description"])
-
-	for deck in decks:
-		decks_sheet.append_row([str(deck.id), str(deck.name), str(deck.description)])
-
+	sheets_manager.export_decks_to_google_sheets()
 	return {"status": "success", "message": "Data exported successfully"}
 
 
 @app.get("/decks/update")
 async def import_decks(x_api_key: str = Header()):
 	AuthManager.validate_api_key_or_403(x_api_key)
-	spreadsheet = sheets_manager.connect_to_google_sheets("flashcards_data")
-	decks_sheet = spreadsheet.worksheet("decks")
-	decks_data = decks_sheet.get_all_values()
-	sheets_manager.update_decks_table(decks_data)
+	sheets_manager.update_decks_table()
 	return {"status": "success"}
 
 
 @app.get("/cards")
 async def export_cards(x_api_key: str = Header()):
 	AuthManager.validate_api_key_or_403(x_api_key)
-	cards = sheets_manager.card_manager.fetch_all()
-
-	spreadsheet = sheets_manager.connect_to_google_sheets("flashcards_data")
-	cards_sheet = spreadsheet.worksheet("cards")
-	cards_sheet.clear()
-	cards_sheet.append_row(["id", "front", "back", "deck_id"])  # Заголовки
-
-	for card in cards:
-		cards_sheet.append_row([str(card.id), str(card.front), str(card.back), str(card.deck_id)])
-
+	sheets_manager.export_cards_to_google_sheets()
 	return {"status": "success", "message": "Data exported successfully"}
 
 
 @app.get("/cards/update")
 async def import_cards(x_api_key: str = Header()):
 	AuthManager.validate_api_key_or_403(x_api_key)
-	spreadsheet = sheets_manager.connect_to_google_sheets("flashcards_data")
-	cards_sheet = spreadsheet.worksheet("cards")
-	cards_data = cards_sheet.get_all_values()
-	sheets_manager.update_cards_table(cards_data)
+	sheets_manager.update_cards_table()
 	return {"status": "success"}
 
 
