@@ -105,11 +105,11 @@ async def delete_card(card_id: int, x_api_key: str = Header()):
 
 
 @app.delete("/decks/delete/{deck_id}")
-async def delete_card(deck_id: int, x_api_key: str = Header()):
+async def delete_deck(deck_id: int, x_api_key: str = Header()):
 	AuthManager.validate_api_key_or_403(x_api_key)
 	if not sheets_manager.deck_exists(deck_id):
 		raise HTTPException(status_code=404, detail="Deck not found")
-	sheets_manager.delete_card(deck_id)
+	sheets_manager.delete_deck(deck_id)
 	return {"status": "success", "message": f"Deck {deck_id} deleted"}
 
 
